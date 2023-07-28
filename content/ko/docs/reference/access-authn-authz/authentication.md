@@ -96,7 +96,7 @@ token,user,uid,"group1,group2,group3"
 
 #### HTTP request에 Bearer Token 넣기
 
-HTTP 클라이언트에서 베어러 토큰 인증을 사용할 때, API 서버는 Authorization 헤더에 `Bearer <토큰>` 값을 예상합니다. bearer token은 HTTP의 인코딩 및 인용 기능을 사용하여 HTTP 헤더 값에 넣을 수 있는 문자열 시퀀스여야 합니다. 예를 들어, 베어러 토큰이 `31ada4fd-adec-460c-809a-9e56ceb75269`라면 아래와 같이 HTTP 헤더에 표시됩니다.
+HTTP 클라이언트에서 bearer token 인증을 사용할 때, API 서버는 Authorization 헤더에 `Bearer <토큰>` 값을 예상합니다. bearer token은 HTTP의 인코딩 및 인용 기능을 사용하여 HTTP 헤더 값에 넣을 수 있는 문자열 시퀀스여야 합니다. 예를 들어, bearer token이 `31ada4fd-adec-460c-809a-9e56ceb75269`라면 아래와 같이 HTTP 헤더에 표시됩니다.
 
 ```http
 Authorization: Bearer 31ada4fd-adec-460c-809a-9e56ceb75269
@@ -122,7 +122,7 @@ API 서버에서는 `--enable-bootstrap-token-auth` 플래그를 사용하여 �
 
 ### Service Account Tokens
 
-서비스 계정은 요청을 검증하기 위해 서명된 베어러 토큰을 사용하는 자동으로 활성화된 인증자입니다. 이 플러그인은 두 개의 선택적인 플래그를 사용합니다:
+서비스 계정은 요청을 검증하기 위해 서명된 bearer token을 사용하는 자동으로 활성화된 인증자입니다. 이 플러그인은 두 개의 선택적인 플래그를 사용합니다:
 
 *`--service-account-key-file`: 서비스 계정 토큰을 검증하는 데 사용되는 PEM 형식의 x509 RSA 또는 ECDSA 개인 또는 공개 키가 포함된 파일입니다. 지정된 파일에는 여러 개의 키가 포함될 수 있으며, 다른 파일과 함께 여러 번의 플래그로 지정할 수 있습니다. 지정되지 않은 경우, --tls-private-key-file이 사용됩니다.
 *`--service-account-lookup`: 활성화된 경우, API에서 삭제된 토큰은 폐기됩니다.
@@ -151,7 +151,7 @@ spec:
         image: nginx:1.14.2
 ```
 
-클러스터 외부에서도 서비스 계정 베어러 토큰은 완벽하게 유효하며, Kubernetes API와 통신하려는 장기 실행 작업에 대한 신원을 생성하는 데 사용할 수 있습니다. 수동으로 서비스 계정을 생성하려면 `kubectl create serviceaccount (이름)` 명령을 사용하십시오. 이렇게 하면 현재 네임스페이스에 서비스 계정이 생성됩니다.
+클러스터 외부에서도 서비스 계정 bearer token은 완벽하게 유효하며, Kubernetes API와 통신하려는 장기 실행 작업에 대한 신원을 생성하는 데 사용할 수 있습니다. 수동으로 서비스 계정을 생성하려면 `kubectl create serviceaccount (이름)` 명령을 사용하십시오. 이렇게 하면 현재 네임스페이스에 서비스 계정이 생성됩니다.
 
 ```bash
 kubectl create serviceaccount jenkins
@@ -747,9 +747,9 @@ API에 대한 인증 절차는 다음과 같습니다:
 * API 서버는 [웹훅 토큰 인증기](#webhook-token-authentication)를 사용하여 외부 서비스에게 `TokenReview`를 제출합니다.
 * 외부 서비스는 토큰의 서명을 확인하고 사용자의 사용자 이름과 그룹을 반환합니다.
 
-### Configuration
+### 설정(Configuration)
 
-Credential plugins are configured through [kubectl config files](/docs/tasks/access-application-cluster/configure-access-multiple-clusters/)
+계정 플러그인은 [kubectl config files](/docs/tasks/access-application-cluster/configure-access-multiple-clusters/)를 통해 사용자 필드의 부분으로 설정됩니다.
 as part of the user fields.
 
 {{< tabs name="exec_plugin_kubeconfig_example_1" >}}
@@ -837,16 +837,16 @@ users:
       # Command to execute. Required.
       command: "example-client-go-exec-plugin"
 
-      # API version to use when decoding the ExecCredentials resource. Required.
+      # ExecCredentials 리소스를 디코딩할 때 사용할 API 버전입니다. 필수 항목입니다.
+
+      # 플러그인이 반환하는 API 버전은 여기에 나열된 버전과 일치해야 합니다..
       #
-      # The API version returned by the plugin MUST match the version listed here.
-      #
-      # To integrate with tools that support multiple versions (such as client.authentication.k8s.io/v1),
-      # set an environment variable, pass an argument to the tool that indicates which version the exec plugin expects,
-      # or read the version from the ExecCredential object in the KUBERNETES_EXEC_INFO environment variable.
+      # 다중 버전을 지원하는 도구(client.authentication.k8s.io/v1과 같은)와 통합하려면, 환경 변수를 설정하거나,
+      # 플러그인이 기대하는 버전을 나타내는 인수를 도구에 전달하거나, KUBERNETES_EXEC_INFO 환경 변수 내의 
+      # ExecCredential 개체에서 버전을 읽어와야 합니다. 이를 통해 플러그인이 지원하는 API 버전을 명확하게 지정할 수 있습니다.
       apiVersion: "client.authentication.k8s.io/v1beta1"
 
-      # Environment variables to set when executing the plugin. Optional.
+      # 플러그인을 실행할 때에 환경변수 설정입니다 선택적입니다.
       env:
       - name: "FOO"
         value: "bar"
@@ -856,7 +856,7 @@ users:
       - "arg1"
       - "arg2"
 
-      # Text shown to the user when the executable doesn't seem to be present. Optional.
+      # 실행 파일이 존재하지 않는 경우 사용자에게 표시되는 텍스트입니다. 선택 사항입니다.
       installHint: |
         example-client-go-exec-plugin is required to authenticate
         to the current cluster.  It can be installed:
@@ -869,17 +869,14 @@ users:
 
         ...
 
-      # Whether or not to provide cluster information, which could potentially contain
-      # very large CA data, to this exec plugin as a part of the KUBERNETES_EXEC_INFO
-      # environment variable.
+      # KUBERNETES_EXEC_INFO 환경 변수의 일부로 exec 플러그인에 대해 매우 큰 CA 데이터를 포함시킬지 
+      # 여부는 해당 플러그인과 클러스터의 특정 요구사항에 따릅니다.
       provideClusterInfo: true
 
-      # The contract between the exec plugin and the standard input I/O stream. If the
-      # contract cannot be satisfied, this plugin will not be run and an error will be
-      # returned. Valid values are "Never" (this exec plugin never uses standard input),
-      # "IfAvailable" (this exec plugin wants to use standard input if it is available),
-      # or "Always" (this exec plugin requires standard input to function). Optional.
-      # Defaults to "IfAvailable".
+      # exec 플러그인과 표준 입력 (stdin) I/O 스트림 간의 계약. 계약이 만족되지 않으면
+      # 플러그인은 동작하지 않고 에러를 반환합니다. 유효값은 "Never" (표준입력으로 절대 사용하지않음),
+      # "IfAvailable" (사용가능할때만 표준입력으로 사용), "Always" (표준입력이 반드시 필요)
+      # 가 있으며 선택할 수 있습니다. 기본값은 "IfAvailable"입니다.
       interactiveMode: Never
 clusters:
 - name: my-cluster
@@ -902,9 +899,7 @@ current-context: my-cluster
 {{% /tab %}}
 {{< /tabs >}}
 
-Relative command paths are interpreted as relative to the directory of the config file. If
-KUBECONFIG is set to `/home/jane/kubeconfig` and the exec command is `./bin/example-client-go-exec-plugin`,
-the binary `/home/jane/bin/example-client-go-exec-plugin` is executed.
+Kubernetes에서는 상대적인 명령 경로가 설정 파일의 디렉토리를 기준으로 해석됩니다. 만약 `KUBECONFIG`가 `/home/jane/kubeconfig`로 설정되어 있고, 실행(exec) 명령이 `./bin/example-client-go-exec-plugin`로 지정되었다면, 바이너리 `/home/jane/bin/example-client-go-exec-plugin`가 실행됩니다.
 
 ```yaml
 - name: my-user
@@ -916,35 +911,22 @@ the binary `/home/jane/bin/example-client-go-exec-plugin` is executed.
       interactiveMode: Never
 ```
 
-### Input and output formats
+### 입출력 포맷(Input and output formats)
 
-The executed command prints an `ExecCredential` object to `stdout`. `k8s.io/client-go`
-authenticates against the Kubernetes API using the returned credentials in the `status`.
-The executed command is passed an `ExecCredential` object as input via the `KUBERNETES_EXEC_INFO`
-environment variable. This input contains helpful information like the expected API version
-of the returned `ExecCredential` object and whether or not the plugin can use `stdin` to interact
-with the user.
+실행된 명령은 `stdout`에 `ExecCredential` 객체를 출력합니다. `k8s.io/client-go`는 이러한 반환된 자격 증명을 `status`에서 사용하여 Kubernetes API에 대해 인증합니다. 실행된 명령은 `KUBERNETES_EXEC_INFO` 환경 변수를 통해 입력으로 `ExecCredential` 객체를 전달받습니다. 이 입력에는 반환된 `ExecCredential` 객체의 예상 API 버전 및 플러그인이 `stdin`을 사용하여 사용자와 상호 작용할 수 있는지 여부와 같은 유용한 정보가 포함되어 있습니다.
 
-When run from an interactive session (i.e., a terminal), `stdin` can be exposed directly
-to the plugin. Plugins should use the `spec.interactive` field of the input
-`ExecCredential` object from the `KUBERNETES_EXEC_INFO` environment variable in order to
-determine if `stdin` has been provided. A plugin's `stdin` requirements (i.e., whether
-`stdin` is optional, strictly required, or never used in order for the plugin
-to run successfully) is declared via the `user.exec.interactiveMode` field in the
-[kubeconfig](/docs/concepts/configuration/organize-cluster-access-kubeconfig/) (see table
-below for valid values). The `user.exec.interactiveMode` field is optional in `client.authentication.k8s.io/v1beta1`
-and required in `client.authentication.k8s.io/v1`.
+인터랙티브 세션(예: 터미널)에서 실행되는 경우, 플러그인은 `stdin`을 직접 사용할 수 있습니다. 플러그인은 `KUBERNETES_EXEC_INFO` 환경 변수에서 입력으로 받은 `ExecCredential` 객체의 `spec.interactive` 필드를 사용하여 `stdin`이 제공되었는지를 확인합니다. 플러그인이 `stdin`을 사용하는 요구 사항(예: `stdin`이 선택적인지, 엄격하게 필요한지, 또는 플러그인이 성공적으로 실행되기 위해 전혀 사용되지 않는지)은 `kubeconfig` 파일의 `user.exec.interactiveMode` 필드에서 선언됩니다. (유효한 값에 대한 테이블은 아래 참조) `user.exec.interactiveMode` 필드는 `client.authentication.k8s.io/v1beta1`에서 선택 사항이며 `client.authentication.k8s.io/v1`에서 필수입니다.
 
 {{< table caption="interactiveMode values" >}}
 | `interactiveMode` Value | Meaning |
 | ----------------------- | ------- |
-| `Never` | This exec plugin never needs to use standard input, and therefore the exec plugin will be run regardless of whether standard input is available for user input. |
-| `IfAvailable` | This exec plugin would like to use standard input if it is available, but can still operate if standard input is not available. Therefore, the exec plugin will be run regardless of whether stdin is available for user input. If standard input is available for user input, then it will be provided to this exec plugin. |
-| `Always` | This exec plugin requires standard input in order to run, and therefore the exec plugin will only be run if standard input is available for user input. If standard input is not available for user input, then the exec plugin will not be run and an error will be returned by the exec plugin runner. |
+| `Never` | 이 exec 플러그인은 절대로 표준 입력을 사용할 필요가 없으므로, 사용자 입력에 대한 표준 입력이 가능한지 여부와 관계없이 실행될 것입니다. |
+| `IfAvailable` | 이 exec 플러그인은 가능하다면 표준 입력을 사용하려고 하지만, 표준 입력이 없더라도 동작할 수 있습니다. 따라서 사용자 입력을 위해 표준 입력이 있는지 여부와 관계없이 exec 플러그인이 실행될 것입니다. 만약 표준 입력이 사용 가능하다면, 해당 exec 플러그인에게 제공될 것입니다. |
+| `Always` | 이 exec 플러그인은 실행에 표준 입력을 필수로 요구하며, 따라서 사용자 입력을 위해 표준 입력이 있는 경우에만 실행될 것입니다. 만약 사용자 입력을 위한 표준 입력이 제공되지 않으면 exec 플러그인은 실행되지 않으며, exec 플러그인 runner에 의해 오류가 반환될 것입니다. |
 {{< /table >}}
 
-To use bearer token credentials, the plugin returns a token in the status of the
-[`ExecCredential`](/docs/reference/config-api/client-authentication.v1beta1/#client-authentication-k8s-io-v1beta1-ExecCredential)
+bearer token 인증을 사용하기 위해선, 플러그인은
+[`ExecCredential`](/docs/reference/config-api/client-authentication.v1beta1/#client-authentication-k8s-io-v1beta1-ExecCredential)상태의 토큰을 반환합니다.
 
 {{< tabs name="exec_plugin_ExecCredential_example_1" >}}
 {{% tab name="client.authentication.k8s.io/v1" %}}
@@ -971,13 +953,11 @@ To use bearer token credentials, the plugin returns a token in the status of the
 {{% /tab %}}
 {{< /tabs >}}
 
-Alternatively, a PEM-encoded client certificate and key can be returned to use TLS client auth.
-If the plugin returns a different certificate and key on a subsequent call, `k8s.io/client-go`
-will close existing connections with the server to force a new TLS handshake.
+또 다른 방법으로, TLS 클라이언트 인증을 위해 PEM 인코딩된 클라이언트 인증서와 개인 키를 반환할 수 있습니다. 플러그인이 이후의 호출에서 다른 인증서와 개인 키를 반환하는 경우, `k8s.io/client-go`는 서버와의 새로운 TLS 핸드쉐이크를 위해 기존 연결을 닫을 것입니다.
 
-If specified, `clientKeyData` and `clientCertificateData` must both must be present.
+만약 `clientKeyData`와 `clientCertificateData`가 지정된 경우, 두 값 모두 존재해야 합니다.
 
-`clientCertificateData` may contain additional intermediate certificates to send to the server.
+`clientCertificateData`에는 서버로 보낼 추가 중간 인증서를 포함시킬 수 있습니다.
 
 {{< tabs name="exec_plugin_ExecCredential_example_2" >}}
 {{% tab name="client.authentication.k8s.io/v1" %}}
@@ -1006,16 +986,12 @@ If specified, `clientKeyData` and `clientCertificateData` must both must be pres
 {{% /tab %}}
 {{< /tabs >}}
 
-Optionally, the response can include the expiry of the credential formatted as a
-[RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339) timestamp.
+선택적으로, 응답에 자격 증명의 만료 시간을 [RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339) 형식의 타임스탬프로 포함할 수 있습니다.
 
-Presence or absence of an expiry has the following impact:
+만료 시간의 포함 또는 미포함에는 다음과 같은 영향이 있습니다:
 
-- If an expiry is included, the bearer token and TLS credentials are cached until
-  the expiry time is reached, or if the server responds with a 401 HTTP status code,
-  or when the process exits.
-- If an expiry is omitted, the bearer token and TLS credentials are cached until
-  the server responds with a 401 HTTP status code or until the process exits.
+- 만료 시간이 포함된 경우, bearer token과 TLS 자격 증명은 만료 시간에 도달할 때까지 캐시되거나 서버가 401 HTTP 상태 코드로 응답하거나 프로세스가 종료될 때까지 캐시됩니다.
+- 만료 시간이 누락된 경우, bearer token과 TLS 자격 증명은 서버가 401 HTTP 상태 코드로 응답하거나 프로세스가 종료될 때까지 캐시됩니다.
 
 {{< tabs name="exec_plugin_ExecCredential_example_3" >}}
 {{% tab name="client.authentication.k8s.io/v1" %}}
@@ -1044,12 +1020,8 @@ Presence or absence of an expiry has the following impact:
 {{% /tab %}}
 {{< /tabs >}}
 
-To enable the exec plugin to obtain cluster-specific information, set `provideClusterInfo` on the `user.exec`
-field in the [kubeconfig](/docs/concepts/configuration/organize-cluster-access-kubeconfig/).
-The plugin will then be supplied this cluster-specific information in the `KUBERNETES_EXEC_INFO` environment variable.
-Information from this environment variable can be used to perform cluster-specific
-credential acquisition logic.
-The following `ExecCredential` manifest describes a cluster information sample.
+Exec 플러그인이 클러스터별 정보를 얻을 수 있도록 하려면 [kubeconfig](/docs/concepts/configuration/organize-cluster-access-kubeconfig/) 파일의 `user.exec` 필드에 `provideClusterInfo`를 `true`로 설정하세요. 이렇게 하면 플러그인은 `KUBERNETES_EXEC_INFO` 환경 변수를 통해 해당 클러스터에 대한 정보를 제공받을 수 있습니다. 이 환경 변수에서 얻은 정보를 사용하여 클러스터별 자격 증명 로직을 수행할 수 있습니다.
+아래는 클러스터 정보 예제를 설명하는 `ExecCredential` 매니페스트입니다.
 
 {{< tabs name="exec_plugin_ExecCredential_example_4" >}}
 {{% tab name="client.authentication.k8s.io/v1" %}}
@@ -1094,17 +1066,15 @@ The following `ExecCredential` manifest describes a cluster information sample.
 {{% /tab %}}
 {{< /tabs >}}
 
-## API access to authentication information for a client {#self-subject-review}
+## 클라이언트의 인증 정보에 대한 API 액세스(API access to authentication information for a client) {#self-subject-review}
 
 {{< feature-state for_k8s_version="v1.27" state="beta" >}}
 
-If your cluster has the API enabled, you can use the `SelfSubjectReview` API to find out how your Kubernetes cluster maps your authentication
-information to identify you as a client. This works whether you are authenticating as a user (typically representing
-a real person) or as a ServiceAccount.
+만약 클러스터가 API를 활성화한 경우, `SelfSubjectReview` API를 사용하여 Kubernetes 클러스터가 클라이언트로서 당신을 식별하기 위해 어떻게 인증 정보를 매핑하는지 확인할 수 있습니다. 이는 사용자(일반적으로 실제 사람을 나타냄) 또는 ServiceAccount로서 인증하는 경우 모두 작동합니다.
 
-`SelfSubjectReview` objects do not have any configurable fields. On receiving a request, the Kubernetes API server fills the status with the user attributes and returns it to the user.
+`SelfSubjectReview` 객체에는 구성 가능한 필드가 없습니다. 요청을 받으면 Kubernetes API 서버는 사용자 속성으로 상태를 채우고 사용자에게 반환합니다.
 
-Request example (the body would be a `SelfSubjectReview`):
+요청 예제 (요청 본문은 `SelfSubjectReview`가 될 것입니다):
 ```
 POST /apis/authentication.k8s.io/v1beta1/selfsubjectreviews
 ```
@@ -1137,7 +1107,7 @@ Response example:
 }
 ```
 
-For convenience, the `kubectl auth whoami` command is present. Executing this command will produce the following output (yet different user attributes will be shown):
+편의를 위해, `kubectl auth whoami` 명령이 제공됩니다. 이 명령을 실행하면 다음과 유사한 출력이 생성됩니다 (단, 사용자 속성은 다를 수 있습니다):
 
 * Simple output example
     ```
@@ -1155,7 +1125,7 @@ For convenience, the `kubectl auth whoami` command is present. Executing this co
     Extra: skills     [reading learning]
     Extra: subjects   [math sports]
     ```
-By providing the output flag, it is also possible to print the JSON or YAML representation of the result:
+output 플래그를 제공함으로써 결과의 JSON 또는 YAML 표현을 출력하는 것도 가능합니다.
 
 {{< tabs name="self_subject_attributes_review_Example_1" >}}
 {{% tab name="JSON" %}}
@@ -1211,32 +1181,25 @@ status:
 {{% /tab %}}
 {{< /tabs >}}
 
-This feature is extremely useful when a complicated authentication flow is used in a Kubernetes cluster, 
-for example, if you use [webhook token authentication](/docs/reference/access-authn-authz/authentication/#webhook-token-authentication) or [authenticating proxy](/docs/reference/access-authn-authz/authentication/#authenticating-proxy).
+이 기능은 Kubernetes 클러스터에서 복잡한 인증 흐름이 사용되는 경우에 매우 유용합니다. 예를 들어, [웹훅 토큰 인증](/docs/reference/access-authn-authz/authentication/#webhook-token-authentication) 또는 [인증 프록시](/docs/reference/access-authn-authz/authentication/#authenticating-proxy)와 같은 인증 방법을 사용하는 경우입니다. 이러한 경우 결과를 JSON 또는 YAML 형식으로 출력하여 인증에 대한 세부 정보를 쉽게 확인할 수 있습니다.
 
 {{< note >}}
-The Kubernetes API server fills the `userInfo` after all authentication mechanisms are applied,
-including [impersonation](/docs/reference/access-authn-authz/authentication/#user-impersonation).
-If you, or an authentication proxy, make a SelfSubjectReview using impersonation,
-you see the user details and properties for the user that was impersonated.
+Kubernetes API 서버는 유저 인증을 포함하여 모든 인증 메커니즘이 적용된 후에 userInfo를 채웁니다. 따라서 인증 대리 또는 인증 프록시가 인증을 위해 SelfSubjectReview를 실행하는 경우, 특정 사용자를 가장한[(impersonation)](/docs/reference/access-authn-authz/authentication/#user-impersonation) 사용자에 대한 사용자 세부 정보와 속성을 확인할 수 있습니다. 이를 통해 impersonation이 적용된 사용자의 식별 정보를 확인할 수 있습니다.
 {{< /note >}}
 
-By default, all authenticated users can create `SelfSubjectReview` objects when the `APISelfSubjectReview` feature is enabled. It is allowed by the `system:basic-user` cluster role. 
+기본적으로, `APISelfSubjectReview` 기능이 활성화되어 있는 경우 모든 인증된 사용자는 `SelfSubjectReview` 객체를 생성할 수 있습니다. 이러한 권한은 `system:basic-user` 클러스터 역할에 의해 허용됩니다.
 
 {{< note >}}
-You can only make `SelfSubjectReview` requests if:
-* the `APISelfSubjectReview`
-  [feature gate](/docs/reference/command-line-tools-reference/feature-gates/)
-  is enabled for your cluster (enabled by default after reaching Beta)
-* the API server for your cluster has the `authentication.k8s.io/v1alpha1` or `authentication.k8s.io/v1beta1`
+`SelfSubjectReview` 요청을 만들 수 있는 경우는 다음과 같습니다:
+* 클러스터에 APISelfSubjectReview [기능 게이트](/docs/reference/command-line-tools-reference/feature-gates/)가 활성화되어 있는 경우 (베타 버전 달성 후 기본적으로 활성화됨).  
+* 클러스터의 API 서버가 `authentication.k8s.io/v1alpha1` 또는 `authentication.k8s.io/v1beta1 API` 그룹을 활성화한 경우
   {{< glossary_tooltip term_id="api-group" text="API group" >}}
-  enabled.
 {{< /note >}}
 
 
 
-## {{% heading "whatsnext" %}}
+## {{% 다음장으로 %}}
 
-* Read the [client authentication reference (v1beta1)](/docs/reference/config-api/client-authentication.v1beta1/)
-* Read the [client authentication reference (v1)](/docs/reference/config-api/client-authentication.v1/)
+* [클라이언트 인증 레퍼런스 (v1beta1)](/docs/reference/config-api/client-authentication.v1beta1/)로 가기
+* [클라이언트 인증 레퍼런스 (v1)](/docs/reference/config-api/client-authentication.v1/)로 가기
 
