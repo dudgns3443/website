@@ -802,7 +802,7 @@ rules:
   verbs: ["impersonate"]
 ```
 
-위임 헤더의 값은 resourceNames 집합을 제한함으로써 추가로 제한될 수 있다.
+위임 헤더의 값은 `resourceNames` 집합을 제한함으로써 추가로 제한될 수 있다.
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
