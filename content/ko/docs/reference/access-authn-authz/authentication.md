@@ -21,7 +21,7 @@ weight: 10
 
 클러스터-독립적인 서비스는 다음과 같은 방식으로 일반 사용자를 관리한다.
 
-- Private key를 배포하는 관리자
+- 개인키(Private key)를 배포하는 관리자
 - Keystone이나 Google 계정과 같은 사용자 저장소
 - 사용자 이름과 비밀번호 목록이 있는 파일
 
@@ -32,7 +32,7 @@ API 호출을 통해 일반 사용자를 추가할 수는 없지만, 클러스�
 서명된 유효한 인증서를 제시하는 모든 사용자는 인증된 것으로 간주된다.
 이 구성에서 쿠버네티스는 인증서의 'subject'의 공통 이름 필드(예: "/CN=bob")에서 
 사용자 이름을 결정한다.
-그런 다음, 역할 기반 접근 제어(RBAC) 하위 시스템은 사용자가 
+여기에서 역할 기반 엑세스 제어(RBAC) 하위 시스템은 사용자가 리소스에 대해
 특정 작업을 수행할 수 있는지 여부를 결정한다. 
 자세한 내용은 [인증서 요청](/docs/reference/access-authn-authz/certificate-signing-requests/#normal-user)을 참조
 
@@ -43,25 +43,23 @@ API 서버에 의해 자동으로 생성되거나 API 호출을 통해 수동으
 이는 파드에 마운트되어 클러스터 내부 프로세스가 쿠버네티스 API와 통신할 수 있게 한다.
 
 API 요청은 일반 사용자나 서비스 계정에 바인딩되거나 [익명 요청](#anonymous-requests)으로 처리된다. 
-이는 워크스테이션에서 'kubectl'을 입력하는 사용자부터 노드의 
-'kubelet' 및 control-plane 멤버까지, 
+이는 워크스테이션에서 'kubectl'을 입력하는 인간 사용자부터 노드의 
+'kubelet', 컨트롤 플레인의 멤버에 이르기까지,
 클러스터 내부 또는 외부의 모든 프로세스가 API 서버에 요청을 보낼 때 
 인증해야 하거나 익명 사용자로 처리되어야 함을 의미한다.
 
-## 인증 전략(Authentication strategies)
+## 인증 전략
 
-쿠버네티스는 API 요청을 인증하기 위해 클라이언트 인증서, bearer token 
+쿠버네티스는 API 요청을 인증하기 위해 클라이언트 인증서, 베어러 토큰
 또는 인증 프록시를 사용하여 인증 전략을 구현한다. 
-API 서버로 HTTP 요청이 전송될 때, 
-플러그인은 다음과 같은 속성을 요청과 연관시키려고 한다:
+API 서버에 HTTP 요청이 이루어지면 플러그인은 다음과 같은 속성을 요청과 연결하려고 시도한다.
 
 * 사용자 이름(Username): 엔드 유저를 식별하는 문자열이다. 일반적으로 `kube-admin` 또는 `jane@example.com`과 같은 값을 가질 수 있다.
 * 사용자 식별자(UID): 사용자를 식별하는 문자열로, 사용자 이름보다 일관되고 고유하게 설정된다.
 * 그룹(Group): 사용자가 소속된 명명된 논리적인 사용자 집합을 나타내는 문자열의 집합이다. 일반적으로 `system:masters` 또는 `devops-team`과 같은 값을 가질 수 있다.
 * 추가 필드(Extra fields): 인가자(authorizer)가 유용하게 활용할 수 있는 추가 정보를 문자열에서 문자열 리스트로 매핑한 map이다.
 
-이러한 값들은 인증 시스템에 대해 알 수 없으며 
-[인가자](/docs/reference/access-authn-authz/authorization/)가 해석할 때에만 의미가 있다.
+모든 값들은 인증 시스템에 대해 불투명하며 [인가자](/ko/docs/reference/access-authn-authz/authorization/)가 해석할 때만 의미를 갖는다.
 
 여러 인증 방법을 동시에 활성화할 수도 있다. 일반적으로 다음과 같은 방법을 사용해야 한다.
 
@@ -95,31 +93,31 @@ openssl req -new -key jbeda.pem -out jbeda-csr.pem -subj "/CN=jbeda/O=app1/O=app
 
 다음은 "jbeda"라는 사용자 이름을 가진 CSR을 생성하며, "app1"과 "app2"라는 두 개의 그룹에 속하는 예시이다.
 
-클라이언트 인증서를 생성하는 방법에 대해서는 .[인증서 관리](/docs/tasks/administer-cluster/certificates/)를 참조.
+클라이언트 인증서를 생성하는 방법은 [인증서 관리](/docs/tasks/administer-cluster/certificates/)를 참조.
 
 ### 정적 토큰 파일
 
 API 서버는 커맨드 라인에서 `--token-auth-file=SOMEFILE` 옵션을 주면 파일에서 
-bearer token을 읽는다. 현재 토큰은 무기한으로 유지되며, 토큰 목록을 변경하려면 
+베어러 토큰을 읽는다. 현재 토큰은 무기한으로 유지되며, 토큰 목록을 변경하려면 
 API 서버를 재시작해야 한다.
 
 토큰 파일은 최소 3개의 열(토큰, 사용자 이름, 사용자 UID)로 구성된 CSV 파일이다. 
 선택적으로 그룹 이름을 추가할 수도 있다.
 
 {{< note >}}
-여러 개의 그룹이 있는 경우, 해당 열은 이중 인용부호로 감싸야 한다. 예:
+여러 개의 그룹이 있는 경우, 해당 열은 큰 따옴표로 감싸야 한다. 예:
 
 ```conf
 token,user,uid,"group1,group2,group3"
 ```
 {{< /note >}}
 
-#### HTTP request에 Bearer Token 넣기
+#### 요청에 베어러 토큰 넣기
 
-HTTP 클라이언트에서 bearer token 인증을 사용할 때, API 서버는 Authorization 헤더에 
-`Bearer <토큰>` 값이 들어있을 것을 기대한다. bearer token은 HTTP의 인코딩 및 
+HTTP 클라이언트에서 베어러 토큰 인증을 사용할 때, API 서버는 Authorization 헤더에 
+`Bearer <토큰>` 값이 들어있을 것을 기대한다. 베어러 토큰은 HTTP의 인코딩 및 
 인용 기능을 사용하여 HTTP 헤더 값에 넣을 수 있는 문자열 시퀀스여야 한다. 
-예를 들어, bearer token이 `31ada4fd-adec-460c-809a-9e56ceb75269`라면 
+예를 들어, 베어러 토큰이 `31ada4fd-adec-460c-809a-9e56ceb75269`라면 
 아래와 같이 HTTP 헤더에 표시된다.
 
 ```http
@@ -131,7 +129,7 @@ Authorization: Bearer 31ada4fd-adec-460c-809a-9e56ceb75269
 {{< feature-state for_k8s_version="v1.18" state="stable" >}}
 
 새로운 클러스터에 대한 간소화된 부트스트래핑을 위해, 쿠버네티스는 *Bootstrap Token*이라고 
-불리는 동적으로 관리된 bearer token을 포함한다. 이러한 토큰은 `kube-system` 네임스페이스의 
+불리는 동적으로 관리된 베어러 토큰을 포함한다. 이러한 토큰은 `kube-system` 네임스페이스의 
 Secrets로 저장되어 동적으로 관리하고 생성할 수 있다. 컨트롤러 매니저에는 만료되는 부트스트랩 
 토큰을 삭제하는 TokenCleaner 컨트롤러가 포함되어 있다.
 
@@ -159,7 +157,7 @@ API 서버에서는 `--enable-bootstrap-token-auth` 플래그를 사용하여
 
 ### 서비스 계정 토큰
 
-서비스 계정은 요청을 검증하기 위해 서명된 bearer token을 사용하는 자동으로 활성화된 
+서비스 계정은 요청을 검증하기 위해 서명된 베어러 토큰을 사용하는 자동으로 활성화된 
 인증자이다. 이 플러그인은 두 개의 선택적인 플래그를 사용한다:
 
 *`--service-account-key-file`: 서비스 계정 토큰을 검증하는 데 사용되는 PEM 형식의 
@@ -169,7 +167,7 @@ x509 RSA 또는 ECDSA 개인 또는 공개 키가 포함된 파일이다. 지정
 *`--service-account-lookup`: 활성화된 경우, API에서 삭제된 토큰은 폐기된다.
 
 서비스 계정은 일반적으로 API 서버에 의해 자동으로 생성되며 `ServiceAccount`[Admission Controller](/docs/reference/access-authn-authz/admission-controllers/)를 통해 
-클러스터에서 실행 중인 파드와 연결된다. bearer token은 알려진 위치의 파드에 마운트되어 
+클러스터에서 실행 중인 파드와 연결된다. 베어러 토큰은 알려진 위치의 파드에 마운트되어 
 클러스터 내부 프로세스가 API 서버와 통신할 수 있게 한다. `PodSpec`의 
 `serviceAccountName` 필드를 사용하여 계정을 명시적으로 파드와 연관시킬 수도 있다.
 
@@ -195,7 +193,7 @@ spec:
         image: nginx:1.14.2
 ```
 
-클러스터 외부에서도 서비스 계정 bearer token은 완벽하게 유효하며, 쿠버네티스 API와 
+클러스터 외부에서도 서비스 계정 베어러 토큰은 완벽하게 유효하며, 쿠버네티스 API와 
 통신하려는 장기 실행 작업에 대한 신원을 생성하는 데 사용할 수 있다. 수동으로 
 서비스 계정을 생성하려면 `kubectl create serviceaccount (이름)` 명령을 사용하자. 
 이렇게 하면 현재 네임스페이스에 서비스 계정이 생성된다.
@@ -220,8 +218,8 @@ eyJhbGciOiJSUzI1NiIsImtp...
 
 생성된 토큰은 서명된 JSON Web Token (JWT)이다.
 
-서명된 JWT는 주어진 서비스 계정으로 인증하는 데 사용할 수 있는 bearer token으로 
-사용될 수 있다. 토큰을 요청에 포함하는 방법에 대해서는 [위의 내용](#putting-a-bearer-token-in-a-request)을 참조. 
+서명된 JWT는 주어진 서비스 계정으로 인증하는 데 사용할 수 있는 베어러 토큰으로 
+사용될 수 있다. 토큰을 요청에 포함하는 방법에 대해서는 [베어러 토큰](#putting-a-bearer-token-in-a-request)을 참조. 
 일반적으로 이러한 토큰은 파드에 마운트되어 클러스터 내에서 API 서버에 접근하는 데 
 사용되지만, 클러스터 외부에서도 사용할 수 있다.
 
@@ -246,7 +244,7 @@ eyJhbGciOiJSUzI1NiIsImtp...
 잘 알려진 필드가 포함된 JSON Web Token (JWT)이다.
 
 사용자를 식별하기 위해 인증자는 OAuth2 [토큰 응답](https://openid.net/specs/openid-connect-core-1_0.html#TokenResponse)에서 
-`id_token`(access_token 아님)을 bearer token으로 사용한다. 토큰이 요청에 포함되는 
+`id_token`(access_token 아님)을 베어러 토큰으로 사용한다. 토큰이 요청에 포함되는 
 방법에 대해서는 [위의 내용](#putting-a-bearer-token-in-a-request)을 참조.
 
 {{< mermaid >}}
@@ -289,16 +287,16 @@ sequenceDiagram
 
 
 쿠버네티스는 신원 제공자로 "통신"할 필요가 없기 때문에 신원을 확인하는 데 필요한 
-모든 데이터가 `id_token`에 포함되어 있다. 모든 요청이 상태를 유지하지 않는(stateless) 
-모델에서는 인증에 대한 확장 가능한 솔루션을 제공한다. 그러나 몇 가지 어려움이 있을 수 있다.
+모든 데이터가 `id_token`에 포함되어 있다. 모든 요청이 스테이트리스 모델에서는 인증에 대한 
+확장 가능한 솔루션을 제공한다. 그러나 몇 가지 어려움이 있을 수 있다.
 
 1. 쿠버네티스에는 인증 프로세스를 시작할 수 있는 "웹 인터페이스"가 없다. 자격 증명을 수집할 수 있는 브라우저나 인터페이스가 없으므로 먼저 신원 제공자에 대해 인증해야 한다
-2. `id_token`은 취소할 수 없으며, 인증서와 유사하게 동작한다. 따라서 토큰은 수명이 짧아야 한다(몇 분 정도). 이로 인해 몇 분마다 새 토큰을 가져와야 하는 번거로움이 있을 수 있다.
+2. `id_token`은 취소할 수 없고 인증서와 같아서 수명이 짧아야 하므로(단 몇 분) 몇 분마다 새 토큰을 발급받아야 하는 것이 매우 번거로울 수 있다.
 3. 쿠버네티스 대시보드에 인증하려면 `kubectl proxy` 명령을 사용하거나 `id_token`을 삽입하는 리버스 프록시를 사용해야 한다.
 
 #### API 서버 설정
 
-플러그인을 활성화 하기위해 API서버에 다음과 같은 플래그를 설정한다:
+플러그인을 활성화하려면, API서버에 다음과 같은 플래그를 구성한다:
 
 | Parameter | Description | Example | Required |
 | --------- | ----------- | ------- | ------- |
@@ -321,7 +319,7 @@ sequenceDiagram
 
 쿠버네티스는 OpenID Connect Identity Provider를 제공하지 않는다.
 이미 제공된 퍼블릭 OpenID Connect Identity Provider를 사용할 수 있다
-(예: Google, or [others](https://connect2id.com/products/nimbus-oauth-openid-connect-sdk/openid-connect-providers)). 또는 여러분이 직접만든 제공자를 사용할 수도 있다. 
+(예: Google, or [others](https://connect2id.com/products/nimbus-oauth-openid-connect-sdk/openid-connect-providers)). 또는 직접 만든 제공자를 사용할 수도 있다. 
 예를 들어 [dex](https://dexidp.io/),
 [Keycloak](https://github.com/keycloak/keycloak),
 CloudFoundry [UAA](https://github.com/cloudfoundry/uaa), 또는
@@ -352,7 +350,7 @@ Tremolo Security의 [OpenUnison](https://openunison.github.io/)등이 있다.
 ##### 옵션 1 - OIDC 인증기
 
 첫 번째 옵션은 kubectl의 `oidc` 인증기를 사용하는 것이다. 이 옵션은 `id_token`을 
-모든 요청의 bearer token으로 설정하고 토큰이 만료되면 토큰을 자동으로 갱신한다. 
+모든 요청의 베어러 토큰으로 설정하고 토큰이 만료되면 토큰을 자동으로 갱신한다. 
 공급자에 로그인한 후 kubectl을 사용하여 `id_token`, `refresh_token`, `client_id` 
 및 `client_secret`을 추가하여 플러그인을 구성한다.
 
@@ -416,7 +414,7 @@ kubectl --token=eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL21sYi50cmVtb2xvLmxhbjo
 
 ### 웹훅 토큰 인증
 
-웹훅 인증은 bearer token을 검증하기 위한 hook이다.
+웹훅 인증은 베어러 토큰을 검증하기 위한 hook이다.
 
 * `--authentication-token-webhook-config-file' 원격 웹훅 서비스에 액세스하는 방법을 설명하는 구성 파일이다.
 * `--authentication-token-webhook-cache-ttl` 인증 결정을 캐시하는 시간을 설정한다. 기본값은 2분이다.
@@ -454,7 +452,7 @@ contexts:
   name: webhook
 ```
 
-클라이언트가 [위에서](#putting-a-bearer-token-in-a-request), 언급한 대로 bearer token을 
+클라이언트가 [위에서](#putting-a-bearer-token-in-a-request), 언급한 대로 베어러 토큰을 
 사용하여 API 서버에 인증을 시도할 때, 인증 웹훅은 해당 토큰을 포함한 직렬화된 JSON
 `TokenReview` 오브젝트를 원격 서비스에게 POST한다.
 
@@ -465,8 +463,10 @@ contexts:
 {{< tabs name="TokenReview_request" >}}
 {{% tab name="authentication.k8s.io/v1" %}}
 {{< note >}}
-쿠버네티스 API 서버는 하위 호환성을 위해 기본적으로 `authentication.k8s.io/v1beta1` 토큰 리뷰를 전송한다. 
-`authentication.k8s.io/v1` 토큰 리뷰 수신을 통해 옵트인하려면 API 서버를 `--authentication-token-webhook-version=v1` 옵션으로 시작해야 한다.
+쿠버네티스 API 서버는 기본적으로 이전 버전과의 호환성을 위해 
+`authentication.k8s.io/v1beta1` 토큰 리뷰를 보낸다. `authentication.k8s.io/v1` 토큰 리뷰를 
+수신하도록 선택하려면 API 서버를 `--authentication-token-webhook-version=v1` 옵션으로 
+시작해야 한다.
 {{< /note >}}
 
 ```yaml
@@ -474,7 +474,7 @@ contexts:
   "apiVersion": "authentication.k8s.io/v1",
   "kind": "TokenReview",
   "spec": {
-    # API 서버로 보내진 불분명한 bearer token
+    # API 서버로 보내진 불분명한 베어러 토큰
     "token": "014fbff9a07c...",
    
     # 토큰이 제시된 서버를 위한 대상 식별자의 목록.
@@ -494,7 +494,7 @@ contexts:
   "apiVersion": "authentication.k8s.io/v1beta1",
   "kind": "TokenReview",
   "spec": {
-    # API 서버로 보내진 불분명한 bearer token
+    # API 서버로 보내진 불분명한 베어러 토큰
     "token": "014fbff9a07c...",
    
     # 토큰이 제시된 서버를 위한 대상 식별자의 목록.
@@ -513,7 +513,7 @@ contexts:
 원격 서비스는 요청의 `status` 필드를 채워서 로그인 성공 여부를 나타내야 한다. 
 응답 본문의 `spec` 필드는 무시되고 생략될 수 있다. 원격 서비스는 받은 
 `TokenReview API` 버전과 동일한 버전의 응답을 반환해야 한다. 
-bearer token의 유효성을 성공적으로 확인한 경우 다음과 같은 응답이 반환된다.
+베어러 토큰의 유효성을 성공적으로 확인한 경우 다음과 같은 응답이 반환된다.
 
 {{< tabs name="TokenReview_response_success" >}}
 {{% tab name="authentication.k8s.io/v1" %}}
@@ -582,7 +582,7 @@ bearer token의 유효성을 성공적으로 확인한 경우 다음과 같은 �
 {{% /tab %}}
 {{< /tabs >}}
 
-성공적이지 못한 요청에 대해 다음과 같이 반환된다.
+실패한 요청에 대해 다음과 같이 반환된다.
 
 {{< tabs name="TokenReview_response_error" >}}
 {{% tab name="authentication.k8s.io/v1" %}}
@@ -622,15 +622,15 @@ bearer token의 유효성을 성공적으로 확인한 경우 다음과 같은 �
 API 서버는 `X-Remote-User`와 같은 요청 헤더 값에서 사용자를 식별할 수 있도록 
 구성할 수 있다. 이는 요청 헤더 값을 설정하는 인증 프록시와 함께 사용하기 위해 설계되었다.
 
-* `--requestheader-username-headers` 필수이며 대소문자를 구분하지 않는다. 사용자 신원을 확인하기 위해 확인할 헤더 이름들을 순서대로 지정한다. 값이 포함된 첫 번째 헤더가 사용자 이름으로 사용된다.
-* `--requestheader-group-headers` 1.6+. 선택적이며 대소문자를 구분하지 않는다. "X-Remote-Group" 헤더를 사용하는 것이 권장된다. 사용자의 그룹을 확인하기 위해 확인할 헤더 이름들을 순서대로 지정한다. 지정된 모든 헤더들에 있는 모든 값들이 그룹 이름으로 사용된다.
-* `--requestheader-extra-headers-prefix` 1.6+. 선택적이며 대소문자를 구분하지 않는다. "X-Remote-Extra-"가 권장된다. 사용자에 대한 추가 정보를 확인하기 위해 사용되는 헤더 접두사들을 지정한다 (일반적으로 구성된 권한 부여 플러그인에 의해 사용됨). 지정된 접두사로 시작하는 모든 헤더는 해당 접두사가 제거된다. 그 이후의 헤더 이름은 소문자로 변환되며, [퍼센트 디코딩](https://tools.ietf.org/html/rfc3986#section-2.1)이 수행되어 추가 키(extra key)가 된다. 헤더 값은 추가 값(extra value)이 된다.
+* `--requestheader-username-headers` 필수, 대소문자를 구분하지 않는다. 사용자 신원을 확인하기 위해 확인할 헤더 이름들을 순서대로 지정한다. 값이 포함된 첫 번째 헤더가 사용자 이름으로 사용된다.
+* `--requestheader-group-headers` 1.6+. 선택사항, 대소문자를 구분하지 않는다. "X-Remote-Group" 헤더를 사용하는 것이 권장된다. 사용자의 그룹을 확인하기 위해 확인할 헤더 이름들을 순서대로 지정한다. 지정된 모든 헤더들에 있는 모든 값들이 그룹 이름으로 사용된다.
+* `--requestheader-extra-headers-prefix` 1.6+. 선택사항, 대소문자를 구분하지 않는다. "X-Remote-Extra-"가 권장된다. 사용자에 대한 추가 정보를 확인하기 위해 사용되는 헤더 접두사들을 지정한다 (일반적으로 구성된 권한 부여 플러그인에 의해 사용됨). 지정된 접두사로 시작하는 모든 헤더는 해당 접두사가 제거된다. 그 이후의 헤더 이름은 소문자로 변환되며, [퍼센트 디코딩](https://tools.ietf.org/html/rfc3986#section-2.1)이 수행되어 추가 키(extra key)가 된다. 헤더 값은 추가 값(extra value)이 된다.
 
 {{< note >}}
-이전 버전인 1.11.3 이전 (그리고 1.10.7, 1.9.11)에서는 추가 키(extra key)에는 [HTTP 헤더 레이블로 허용되는 문자](https://tools.ietf.org/html/rfc7230#section-3.2.6)만 포함될 수 있었다.
+1.11.3(및 1.10.7, 1.9.11) 이전에, 추가 키(extra key)는 [HTTP 헤더 레이블로 허용되는 문자](https://tools.ietf.org/html/rfc7230#section-3.2.6)만 포함될 수 있었다.
 {{< /note >}}
 
-예를 들어 다음 설정과 함께:
+예를 들어 다음 설정과 함께
 
 ```
 --requestheader-username-headers=X-Remote-User
@@ -638,7 +638,7 @@ API 서버는 `X-Remote-User`와 같은 요청 헤더 값에서 사용자를 식
 --requestheader-extra-headers-prefix=X-Remote-Extra-
 ```
 
-다음 요청을 보내면:
+다음 요청을 보내면
 
 ```http
 GET / HTTP/1.1
@@ -650,7 +650,7 @@ X-Remote-Extra-Scopes: openid
 X-Remote-Extra-Scopes: profile
 ```
 
-사용자 정보 결과는 이렇게 될 것이다:
+다음과 같은 사용자 정보를 반환한다:
 
 ```yaml
 name: fido
@@ -667,11 +667,9 @@ extra:
 
 
 
-헤더 변조를 방지하기 위해 인증 프록시는 요청 헤더를 확인하기 전에 API 서버에 대해 유효한 
-클라이언트 인증서를 제시하고 지정된 CA(인증 기관)를 통해 인증되어야 한다. 다른 컨텍스트에서 
-사용된 CA를 재사용하지 말아야 한다. 
-경고! : CA의 사용을 보호하는 리스크와 메커니즘을 이해하지 못한채로 
-다른 context에서 사용되는 CA를 **재사용 하지말자**
+헤더 변조를 방지하기 위해 인증 프록시는 요청 헤더를 검사하기 전에 지정된 CA에 대한 유효성 검사를 위해 유효한 클라이언트 인증서를 API 서버에 제시해야 한다. 다른 컨텍스트에서 사용된 CA를 
+재사용하지 말아야 한다. 경고! : CA의 사용을 보호하는 메커니즘과 위험을 이해하지 못하는 한 
+다른 컨텍스트에서 사용되는 CA를 재사용하지 **않는다**
 
 * `--requestheader-client-ca-file`필수 항목이다. PEM 인코딩된 인증서 번들(Certificate Bundle)을 지정한다. 요청 헤더를 확인하기 전에 유효한 클라이언트 인증서가 지정된 파일의 CA 인증 기관에 대해 인증되어야 한다. 이를 통해 인증 프록시는 클라이언트의 신원을 검증하고, 변조되지 않은 요청인지 확인할 수 있다.
 * `--requestheader-allowed-names` 선택적 옵션이다. Common Name 값(CN)들의 리스트이다. 이 옵션을 설정하면 유효한 클라이언트 인증서가 해당 리스트에 지정된 CN 중 하나를 가져야만 요청 헤더를 확인하기 전에 사용자 이름을 확인할 수 있다. 만약 이 옵션이 비어있다면, 모든 CN이 허용된다. 이 옵션을 사용하여 특정 CN만 허용하도록 설정할 수 있다.
@@ -683,13 +681,13 @@ extra:
 사용자 이름은 `system:anonymous`로, 그룹은 `system:unauthenticated`로 설정된다.
 
 예를 들어, 토큰 인증이 구성된 서버에서 익명 액세스가 활성화된 경우, 유효하지 않은 bearer 
-token을 제공하는 요청은 `401 Unauthorized` 오류를 받게 된다. bearer token을 제공하지 않는 
+token을 제공하는 요청은 `401 Unauthorized` 오류를 받게 된다. 베어러 토큰을 제공하지 않는 
 요청은 익명 요청으로 처리된다.
 
 1.5.1-1.5.x 버전에서는 익명 액세스가 기본적으로 비활성화되어 있으며, 
 API 서버에 `--anonymous-auth=true` 옵션을 전달하여 활성화할 수 있다.
 
-1.6 이상 버전에서는 인가 모드가 AlwaysAllow가 아닌 경우 익명 액세스가 기본적으로 활성화되며, 
+1.6 이상 버전에서는 인가 모드가 `AlwaysAllow`가 아닌 경우 익명 액세스가 기본적으로 활성화되며, 
 API 서버에 `--anonymous-auth=false` 옵션을 전달하여 비활성화할 수 있다. 1.6 버전부터 
 ABAC와 RBAC 인가자(authorizer)는 `system:anonymous` 사용자 또는 `system:unauthenticated` 
 그룹의 명시적인 권한 부여를 요구하므로, `*` 사용자 또는 `*` 그룹에 액세스 권한을 부여하는 
@@ -709,12 +707,12 @@ ABAC와 RBAC 인가자(authorizer)는 `system:anonymous` 사용자 또는 `syste
 * 요청된 사용자 정보는 위임된 값으로 대체된다.
 * 요청은 평가되고, 권한 부여는 위임된 사용자 정보를 기반으로 실행된다.
 
-다음 HTTP 헤더를 사용하여 위임 요청을 수행할 수 있다:
+다음 HTTP 헤더를 사용하여 위임 요청을 수행할 수 있다.
 
 * `Impersonate-User`: 동작할 사용자 이름이다.
-* `Impersonate-Group`: 동작할 그룹 이름이다. 여러 번 제공하여 여러 그룹을 설정할 수 있다. 선택 사항이다. "Impersonate-User"가 필요한다.
-* `Impersonate-Extra-( extra name )`: 용자와 추가 필드를 연결하는 데 사용되는 동적 헤더이다. 선택 사항이다. "Impersonate-User"가 필요한다. 일관되게 유지하려면 `(extra name)`은 소문자여야하며, [HTTP 헤더 라벨로 허용되는 문자](https://tools.ietf.org/html/rfc7230#section-3.2.6)가 아닌 모든 문자는 utf8 및 [퍼센트 인코딩](https://tools.ietf.org/html/rfc3986#section-2.1)되어야한다.
-* `Impersonate-Uid`: 사용자를 위임하는 데 사용되는 고유 식별자이다. 선택 사항이다. "Impersonate-User"가 필요한다. 쿠버네티스에서는 이 문자열에 대해 어떤 형식 요구 사항도 부과하지 않는다.
+* `Impersonate-Group`: 동작할 그룹 이름이다. 여러 번 제공하여 여러 그룹을 설정할 수 있다. 선택 사항, "Impersonate-User"가 필요한다.
+* `Impersonate-Extra-( extra name )`: 사용자와 추가 필드를 연결하는 데 사용되는 동적 헤더이다. 선택 사항, "Impersonate-User"가 필요한다. 일관되게 유지하려면 `(extra name)`은 소문자여야하며, [HTTP 헤더 라벨로 허용되는 문자](https://tools.ietf.org/html/rfc7230#section-3.2.6)가 아닌 모든 문자는 utf8 및 [퍼센트 인코딩](https://tools.ietf.org/html/rfc3986#section-2.1)되어야한다.
+* `Impersonate-Uid`: 사용자를 위임하는 데 사용되는 고유 식별자이다. 선택 사항. "Impersonate-User"가 필요한다. 쿠버네티스에서는 이 문자열에 대해 어떤 형식 요구 사항도 부과하지 않는다.
 
 {{< note >}}
 1.11.3 이전(그리고 1.10.7, 1.9.11)까지는, `( extra name )`은 [HTTP헤더 라벨로 허용되는 문자](https://tools.ietf.org/html/rfc7230#section-3.2.6)만을 포함해야 했다.
@@ -866,7 +864,7 @@ API에 대한 인증 절차는 다음과 같다:
 
 * 사용자가 `kubectl` 명령을 실행한다.
 * 자격 증명 플러그인은 사용자에게 LDAP 자격 증명을 요청하고, 자격 증명을 외부 서비스와 교환하여 토큰을 받아온다.
-* 자격 증명 플러그인은 토큰을 client-go에 반환하며, client-go는 이 토큰을 API 서버에 대한 bearer token으로 사용한다.
+* 자격 증명 플러그인은 토큰을 client-go에 반환하며, client-go는 이 토큰을 API 서버에 대한 베어러 토큰으로 사용한다.
 * API 서버는 [웹훅 토큰 인증기](#webhook-token-authentication)를 사용하여 외부 서비스에게 `TokenReview`를 제출한다.
 * 외부 서비스는 토큰의 서명을 확인하고 사용자의 사용자 이름과 그룹을 반환한다.
 
@@ -1066,7 +1064,7 @@ current-context: my-cluster
 | `Always` | 이 exec 플러그인은 실행에 표준 입력을 필수로 요구하며, 따라서 사용자 입력을 위해 표준 입력이 있는 경우에만 실행될 것이다. 만약 사용자 입력을 위한 표준 입력이 제공되지 않으면 exec 플러그인은 실행되지 않으며, exec 플러그인 runner에 의해 오류가 반환될 것이다. |
 {{< /table >}}
 
-bearer token 인증을 사용하기 위해선, 플러그인은
+베어러 토큰 인증을 사용하기 위해선, 플러그인은
 [`ExecCredential`](/docs/reference/config-api/client-authentication.v1beta1/#client-authentication-k8s-io-v1beta1-ExecCredential)상태의 토큰을 반환한다.
 
 {{< tabs name="exec_plugin_ExecCredential_example_1" >}}
@@ -1131,10 +1129,10 @@ bearer token 인증을 사용하기 위해선, 플러그인은
 
 선택적으로, 응답에 자격 증명의 만료 시간을 [RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339) 형식의 타임스탬프로 포함할 수 있다.
 
-만료 시간의 포함 또는 미포함에는 다음과 같은 영향이 있다:
+만료의 유무는 다음과 같은 영향이 있다.
 
-- 만료 시간이 포함된 경우, bearer token과 TLS 자격 증명은 만료 시간에 도달할 때까지 캐시되거나 서버가 401 HTTP 상태 코드로 응답하거나 프로세스가 종료될 때까지 캐시된다.
-- 만료 시간이 누락된 경우, bearer token과 TLS 자격 증명은 서버가 401 HTTP 상태 코드로 응답하거나 프로세스가 종료될 때까지 캐시된다.
+- 만료 시간이 포함된 경우, 베어러 토큰과 TLS 자격 증명은 만료 시간에 도달할 때까지 캐시되거나 서버가 401 HTTP 상태 코드로 응답하거나 프로세스가 종료될 때까지 캐시된다.
+- 만료 시간이 누락된 경우, 베어러 토큰과 TLS 자격 증명은 서버가 401 HTTP 상태 코드로 응답하거나 프로세스가 종료될 때까지 캐시된다.
 
 {{< tabs name="exec_plugin_ExecCredential_example_3" >}}
 {{% tab name="client.authentication.k8s.io/v1" %}}
@@ -1233,7 +1231,7 @@ POST /apis/authentication.k8s.io/v1beta1/selfsubjectreviews
   "kind": "SelfSubjectReview"
 }
 ```
-Response example:
+응답 예제:
 
 ```json
 {
@@ -1256,17 +1254,17 @@ Response example:
 }
 ```
 
-편의를 위해, `kubectl auth whoami` 명령이 제공된다. 이 명령을 실행하면 다음과 유사한 출력이 
+편의를 위해, `kubectl auth whoami` 명령이 있다. 이 명령을 실행하면 다음과 같은 출력이 
 생성된다 (단, 사용자 속성은 다를 수 있다):
 
-* Simple output example
+* 간단한 출력 예제
     ```
     ATTRIBUTE         VALUE
     Username          jane.doe
     Groups            [system:authenticated]
     ```
 
-* Complex example including extra attributes
+* 추가 속성들을 초함하는 예제
     ```
     ATTRIBUTE         VALUE
     Username          jane.doe
@@ -1275,7 +1273,7 @@ Response example:
     Extra: skills     [reading learning]
     Extra: subjects   [math sports]
     ```
-output 플래그를 제공함으로써 결과의 JSON 또는 YAML 표현을 출력하는 것도 가능한다.
+output 플래그를 제공함으로써 결과의 JSON 또는 YAML 표현을 출력하는 것도 가능하다.
 
 {{< tabs name="self_subject_attributes_review_Example_1" >}}
 {{% tab name="JSON" %}}
@@ -1331,7 +1329,7 @@ status:
 {{% /tab %}}
 {{< /tabs >}}
 
-이 기능은 쿠버네티스 클러스터에서 복잡한 인증 흐름이 사용되는 경우에 매우 유용한다. 예를 들어, 
+이 기능은 쿠버네티스 클러스터에서 복잡한 인증 흐름이 사용되는 경우에 매우 유용하다. 예를 들어, 
 [웹훅 토큰 인증](/docs/reference/access-authn-authz/authentication/#webhook-token-authentication) 또는 [인증 프록시](/docs/reference/access-authn-authz/authentication/#authenticating-proxy)와 같은 인증 방법을 사용하는 경우이다. 
 이러한 경우 결과를 JSON 또는 YAML 형식으로 출력하여 인증에 대한 세부 정보를 쉽게 확인할 수 있다.
 
